@@ -8,6 +8,7 @@ import uuid
 import aiohttp
 import asyncio
 import urllib
+from src import Logger
     
 host = 'https://api.projectoxford.ai'
 
@@ -93,12 +94,12 @@ def detect_faces_in_photo(image):
                 faces.append(face['faceId'])
         response.close()
     except Exception as e:
-        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        Logger.error("[Errno {0}] {1}".format(e.errno, e.strerror))
     finally:
         return faces
     
 @asyncio.coroutine
-def identify_faces(user_id, faces):
+def identify_faces(user_id, faces, max_candidata=1):
     faces_res = []
     headers = {
         # Request headers
@@ -106,7 +107,7 @@ def identify_faces(user_id, faces):
         'Ocp-Apim-Subscription-Key': Config.config['face_api_key'],
     }
     
-    body = {'faceIds': faces, 'personGroupId': user_id, 'maxNumOfCandidatesReturned':1}
+    body = {'faceIds': faces, 'personGroupId': user_id, 'maxNumOfCandidatesReturned':max_candidata}
     
     try:
         url = host + "/face/v0/identifications"
@@ -118,14 +119,14 @@ def identify_faces(user_id, faces):
             faces_res = json_data
             return faces_res
             
-        if response.status == 400:
-            result = json_data['code']
-            return result
+#         if response.status == 400:
+#             result = json_data['code']
+#             return result
             
     except Exception as e:
-        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        Logger.error("[Errno {0}] {1}".format(e.errno, e.strerror))
 
-    return None
+    return faces_res
 
 @asyncio.coroutine
 def create_person(user_id, faces, name):
@@ -144,10 +145,10 @@ def create_person(user_id, faces, name):
         response.close()
         
         if response.status == 200:
-            json_str = json.loads(data)
+            json_str = json.loads(data.decode())
             person_id = json_str.get('personId', '')
     except Exception as e:
-        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        Logger.error("[Errno {0}] {1}".format(e.errno, e.strerror))
     finally:
         return person_id
     
@@ -164,15 +165,17 @@ def train_person_group(user_id):
         data = yield from response.read()
         response.close()
     except Exception as e:
-        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        Logger.error("[Errno {0}] {1}".format(e.errno, e.strerror))
 
 @asyncio.coroutine
 def train_person_group_wait(user_id):
     yield from train_person_group(user_id)
     status = yield from get_training_status(user_id)
+    Logger.debug('train ' + user_id + " status: " + status)
     while status == 'running':
-        yield from asyncio.sleep(1)
+        yield from asyncio.sleep(0.1)
         status = yield from get_training_status(user_id)
+        Logger.debug('train ' + user_id + " status: " + status)
     
 @asyncio.coroutine
 def get_training_status(user_id):
@@ -186,13 +189,12 @@ def get_training_status(user_id):
         url = host + "/face/v0/persongroups/%s/training" % user_id
         response = yield from aiohttp.request('GET', url, headers=headers)
         
-        if response.status == 200:
-            data = yield from response.read()
-            stat_json = json.loads(data)
-            status = stat_json['status']
+        data = yield from response.read()
+        stat_json = json.loads(data.decode())
+        status = stat_json['status']
         response.close()
     except Exception as e:
-        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        Logger.error("[Errno {0}] {1}".format(e.errno, e.strerror))
     finally:
         return status
     
@@ -218,23 +220,38 @@ def delete_person(user_id, person_id):
         data = yield from response.read()
         response.close()
     except Exception as e:
-        print("[Errno {0}] {1}".format(e.errno, e.strerror))
+        Logger.error("[Errno {0}] {1}".format(e.errno, e.strerror))
         
 
 @asyncio.coroutine
 def test():
-    user_id = 'xxx'
+    user_id = 'wang'
     try:
         yield from delete_person_group(user_id)
         yield from train_default(user_id)
-        faces = yield from detect_faces_in_photo('e:/data/1.jpg')
-        print(faces)
-        yield from create_person(user_id, faces, 'wang')
-        yield from train_person_group_wait(user_id)
-        faces = yield from detect_faces_in_photo('e:/data/1.jpg')
-        print(faces)
-        faces = yield from identify_faces(user_id, faces)
-        print(faces)
+
+#         faces = yield from detect_faces_in_photo('e:/data/1.jpg')
+#         print(faces)
+#         yield from create_person(user_id, faces, '1')
+#         
+#         faces = yield from detect_faces_in_photo('e:/data/2.jpg')
+#         print(faces)
+#         yield from create_person(user_id, faces, '2')
+#         
+#         faces = yield from detect_faces_in_photo('e:/data/3.jpg')
+#         print(faces)
+#         yield from create_person(user_id, faces, '3')
+#         
+#         faces = yield from detect_faces_in_photo('e:/data/4.jpg')
+#         print(faces)
+#         yield from create_person(user_id, faces, '4')
+#         
+#         yield from train_person_group_wait(user_id)
+        
+#         faces = yield from detect_faces_in_photo('e:/data/2.jpg')
+#         print(faces)
+#         faces = yield from identify_faces(user_id, faces, 1)
+#         print(faces)
     finally:
         pass
     
