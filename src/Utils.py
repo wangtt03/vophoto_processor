@@ -4,6 +4,23 @@ from src import Config
 from hashlib import md5
 import os
 
+def get_meaningful_keywords(sentence):
+    keys = set()
+    key_words = sentence.split(' ')
+    if not key_words:
+        return keys;
+    
+    for k in key_words:
+        pair = k.split('_')
+        if pair is None or len(pair) < 2:
+            continue
+        
+        if pair[1] in Config.config['meaningful_pos']:
+            keys.add(pair[0])
+        
+    
+    return keys
+
 def get_user_path(user_id):
     md5ins = md5.new()
     md5ins.update(user_id)

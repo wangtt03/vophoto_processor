@@ -23,12 +23,16 @@ def process_location(image):
 
 @asyncio.coroutine
 def process_voice(image):
-    pass
+    desc = image.get('desc', '')
+    keys = Utils.get_meaningful_keywords(desc)
+    tags = image.get('tags', set())
+    tags = tags | keys
+    image['tags'] = tags
+    Logger.debug('tags: ' + str(tags))
 
 @asyncio.coroutine
 def process_faces(image):
-#     faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
-    faces = yield from FaceUtils.detect_faces_in_photo("e:/data/" + image['image_name'])
+    faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
     Logger.debug('processing: ' + "e:/data/" + image['image_name'])
     if len(faces) == 0 or len(faces) > 10:
         return
@@ -36,27 +40,31 @@ def process_faces(image):
     names = Utils.get_human_names(image.get('desc', ''))
     names.reverse()
     for face in faces:
-        person_id = yield from FaceUtils.create_person(image['user_id'], [face], uuid.uuid4())
-        Logger.debug('person created: ' + person_id)
-        
         candidates = []
+        person_id = ''
         identify_res = yield from FaceUtils.identify_faces(image['user_id'], [face], 3)
-        Logger.debug('identify result: ' + str(identify_res))
-        for result in identify_res:
+        if len(identify_res) > 0:
+            result = identify_res[0]
             candidates = result['candidates']
-          
-        name = ''
-        try:
-            name = names.pop()
-        except:
-            pass
+            for cand in candidates:
+                if cand['confidence'] > 0.9:
+                    person_id = cand['personId']
+                    break
         
-        person = {'user_id':image['user_id'], 'person_id':person_id, 'name':name, 'candidates': candidates} 
-        MongoHelper.save_person(person)
-        MongoHelper.add_train_person_groups(image['user_id'])
+        if not person_id:
+            person_id = yield from FaceUtils.create_person(image['user_id'], [face], uuid.uuid4())
+            Logger.debug('person created: ' + person_id)
+            name = ''
+            try:
+                name = names.pop()
+            except:
+                pass
+            person = {'user_id':image['user_id'], 'person_id':person_id, 'name':name, 'candidates': candidates} 
+            MongoHelper.save_person(person)
+            MongoHelper.add_train_person_groups(image['user_id'])
         
-        tags = image.get('tags', [])
-        tags.append(person_id)
+        tags = image.get('tags', set())
+        tags.add(person_id)
         image['tags'] = tags
         Logger.debug('tags: ' + str(tags))
 
