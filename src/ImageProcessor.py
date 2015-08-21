@@ -1,13 +1,13 @@
 #Encoding=UTF-8
 
 import asyncio
-from src import Config
-from src import MongoHelper
-from src import FaceUtils
+import Config
+import MongoHelper
+import FaceUtils
 import time
 import uuid
-from src import Utils
-from src import Logger
+import Utils
+import Logger
 
 @asyncio.coroutine
 def process_images(image):

@@ -1,6 +1,6 @@
 #Encoding=UTF8
 
-from src import Config
+import Config
 import json
 import time
 import os
@@ -8,7 +8,7 @@ import uuid
 import aiohttp
 import asyncio
 import urllib
-from src import Logger
+import Logger
     
 host = 'https://api.projectoxford.ai'
 

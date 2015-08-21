@@ -1,6 +1,6 @@
 #Encoding=UTF8
 
-from src import Config
+import Config
 from hashlib import md5
 import os
 

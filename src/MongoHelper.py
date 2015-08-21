@@ -1,9 +1,9 @@
 #Encoding=UTF8
 
 import pymongo
-import src.Config
+import Config
 
-conn = pymongo.MongoClient(src.Config.config['mongo_url'])
+conn = pymongo.MongoClient(Config.config['mongo_url'])
 
 def get_unprocessed(num):
     images = []
