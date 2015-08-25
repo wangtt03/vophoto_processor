@@ -24,8 +24,16 @@ def save_person(person):
     db = conn.VoiceImageDB
     coll = db.person_list
     coll.create_index('user_id')
-    coll.create_index('person_id')
+    coll.create_index('face_id')
     coll.save(person)
+    
+def get_person(user_id, face_id):
+    db = conn.VoiceImageDB
+    coll = db.person_list
+    coll.create_index('user_id')
+    coll.create_index('face_id')
+    face = coll.find_one({'user_id': user_id, 'face_id': face_id})
+    return face
     
 def get_train_person_groups(num):
     train = []

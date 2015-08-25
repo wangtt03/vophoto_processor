@@ -13,8 +13,9 @@ import Logger
 def process_images(image):
     process_location(image)
     process_voice(image)
-    yield from process_faces(image)
+    yield from process_face_groups(image)
     image['processed'] = True
+    Logger.debug('final image: ' + str(image))
     MongoHelper.save_image(image)
 
 @asyncio.coroutine
@@ -25,11 +26,70 @@ def process_location(image):
 def process_voice(image):
     desc = image.get('desc', '')
     keys = Utils.get_meaningful_keywords(desc)
-    tags = image.get('tags', set())
-    tags = tags | keys
+    tags = image.get('tags', [])
+    for key in keys:
+        if not key in tags:
+            tags.append(key)
     image['tags'] = tags
     Logger.debug('tags: ' + str(tags))
 
+@asyncio.coroutine
+def process_face_groups(image):
+#     faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
+    faces = yield from FaceUtils.detect_faces_in_photo("e:/data/images/" + image['image_name'])
+    Logger.debug('processing: ' + "e:/data/images/" + image['image_name'])
+    if len(faces) == 0 or len(faces) > 10:
+        return
+    
+    names = Utils.get_human_names(image.get('desc', ''))
+    names.reverse()
+    tags = image.get('tags', [])
+    for face in faces:
+        face_id = ''
+        similars = yield from FaceUtils.find_similar_faces(image['user_id'], face)
+        Logger.debug('similars: ' + str(similars))
+        
+        for simi in similars:
+            conf = simi['confidence']
+            if conf >= 0.9:
+                face_id = simi['faceId']
+                break
+            
+        if not face_id:
+            Logger.debug('no face id detected')
+            face_id = face
+            yield from FaceUtils.add_face_to_group(image['user_id'], face)
+            try:
+                name = names.pop()
+            except:
+                name = ''
+                
+            face_info = {'user_id':image['user_id'], 'face_id':face, 'name':name, 'candidates': similars}
+            MongoHelper.save_person(face_info)
+        else:
+            Logger.debug('face id detected')
+            face_info = MongoHelper.get_person(image['user_id'], face_id)
+            candidates = face_info['candidates']
+            if not candidates:
+                candidates = similars
+                face_info['candidates'] = candidates
+            else:
+                candidates_id = [i['faceId'] for i in face_info['candidates']]
+                for simi in similars:
+                    if not simi['faceId'] in candidates_id and simi['faceId'] != face_id:
+                        candidates.append(simi)
+                face_info['candidates'] = candidates
+                
+            MongoHelper.save_person(face_info)
+            Logger.debug('face info saved ' + str(face_info))
+
+        if not face_id in tags:
+            tags.append(face_id)
+        
+    image['tags'] = tags
+    Logger.debug('tags: ' + str(tags))
+            
+    
 @asyncio.coroutine
 def process_faces(image):
     faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
@@ -85,12 +145,12 @@ def main():
             if len(tasks) > 0:
                 loop.run_until_complete(asyncio.wait(tasks))
                 
-            train = MongoHelper.get_train_person_groups(10)
-            tasks = []
-            for tr in train:
-                tasks.append(asyncio.async(train_person_group(tr['name'])))
-            if len(tasks) > 0:
-                loop.run_until_complete(asyncio.wait(tasks))
+#             train = MongoHelper.get_train_person_groups(10)
+#             tasks = []
+#             for tr in train:
+#                 tasks.append(asyncio.async(train_person_group(tr['name'])))
+#             if len(tasks) > 0:
+#                 loop.run_until_complete(asyncio.wait(tasks))
                 
             time.sleep(1)
     finally:
