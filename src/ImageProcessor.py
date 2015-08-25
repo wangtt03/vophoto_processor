@@ -35,9 +35,9 @@ def process_voice(image):
 
 @asyncio.coroutine
 def process_face_groups(image):
-#     faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
-    faces = yield from FaceUtils.detect_faces_in_photo("e:/data/images/" + image['image_name'])
-    Logger.debug('processing: ' + "e:/data/images/" + image['image_name'])
+    faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
+#     faces = yield from FaceUtils.detect_faces_in_photo("e:/data/images/" + image['image_name'])
+    Logger.debug('processing: ' + Utils.get_user_path(image['user_id']) + "/"  + image['image_name'])
     if len(faces) == 0 or len(faces) > 10:
         return
     
@@ -93,7 +93,7 @@ def process_face_groups(image):
 @asyncio.coroutine
 def process_faces(image):
     faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
-    Logger.debug('processing: ' + "e:/data/" + image['image_name'])
+    Logger.debug('processing: ' + Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
     if len(faces) == 0 or len(faces) > 10:
         return
     
