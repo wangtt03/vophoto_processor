@@ -3,6 +3,45 @@
 import Config
 from hashlib import md5
 import os
+from pymemcache.client.base import Client
+import pickle
+
+mc = Client((Config.config['memcached_host'], 11211))
+
+def get_user_photo_location_indexer(user_id):
+    indexer = mc.get(user_id + '_location')
+    if indexer is not None:
+        return indexer
+    
+    filename = get_user_path(user_id) + "/" + "loc_indexer.dat"
+    with open(filename,'rb') as fp:
+        indexer = pickle.load(fp)
+        
+    mc.set(user_id, indexer)
+    return indexer
+    
+def update_user_photo_indexer(user_id, location, image):
+    filename = get_user_path(user_id) + "/" + "loc_indexer.dat"
+    mckey = user_id + '_location'
+    indexer = mc.get(mckey)
+    if not indexer:
+        if not os.path.exists(filename):
+            indexer = [[],[]]
+        else:
+            with open(filename,'rb') as fp:
+                indexer = pickle.load(fp)
+    
+    if indexer is None:
+        return
+    
+    indexer[0].append(location)
+    indexer[1].append(image)
+    
+    with open(filename,'wb') as fp:
+        pickle.dump(indexer,fp)
+    
+    mc.set(mckey, indexer)
+    return indexer
 
 def get_meaningful_keywords(sentence):
     keys = set()
@@ -22,8 +61,8 @@ def get_meaningful_keywords(sentence):
     return keys
 
 def get_user_path(user_id):
-    md5ins = md5.new()
-    md5ins.update(user_id)
+    md5ins = md5()
+    md5ins.update(str(user_id).encode())
     md5str = md5ins.hexdigest()
     path = Config.config['photo_root'] + md5str[0:2] + "/" + md5str[2:4] + "/" + md5str[4:6] + "/" + user_id
     if not os.path.exists(path):

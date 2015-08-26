@@ -11,8 +11,8 @@ import Logger
 
 @asyncio.coroutine
 def process_images(image):
-    process_location(image)
-    process_voice(image)
+    yield from process_location(image)
+    yield from process_voice(image)
     yield from process_face_groups(image)
     image['processed'] = True
     Logger.debug('final image: ' + str(image))
@@ -20,7 +20,12 @@ def process_images(image):
 
 @asyncio.coroutine
 def process_location(image):
-    pass
+    location = image.get('location','0,0')
+    name = image['image_name']
+    user_id = image['user_id']
+    loc = [float(i) for i in location.split(',')]
+    Utils.update_user_photo_indexer(user_id, loc, name)
+    
 
 @asyncio.coroutine
 def process_voice(image):
@@ -36,8 +41,9 @@ def process_voice(image):
 @asyncio.coroutine
 def process_face_groups(image):
     faces = yield from FaceUtils.detect_faces_in_photo(Utils.get_user_path(image['user_id']) + "/" + image['image_name'])
-#     faces = yield from FaceUtils.detect_faces_in_photo("e:/data/images/" + image['image_name'])
     Logger.debug('processing: ' + Utils.get_user_path(image['user_id']) + "/"  + image['image_name'])
+#     faces = yield from FaceUtils.detect_faces_in_photo("e:/data/images/" + image['image_name'])
+#     Logger.debug('processing: ' + "e:/data/images/" + image['image_name'])
     if len(faces) == 0 or len(faces) > 10:
         return
     
@@ -65,23 +71,15 @@ def process_face_groups(image):
                 name = ''
                 
             face_info = {'user_id':image['user_id'], 'face_id':face, 'name':name, 'candidates': similars}
-            MongoHelper.save_person(face_info)
-        else:
-            Logger.debug('face id detected')
-            face_info = MongoHelper.get_person(image['user_id'], face_id)
-            candidates = face_info['candidates']
-            if not candidates:
-                candidates = similars
-                face_info['candidates'] = candidates
-            else:
-                candidates_id = [i['faceId'] for i in face_info['candidates']]
-                for simi in similars:
-                    if not simi['faceId'] in candidates_id and simi['faceId'] != face_id:
-                        candidates.append(simi)
-                face_info['candidates'] = candidates
+            for simi in similars:
+                fid = simi['faceId']
+                sm = MongoHelper.get_person(image['user_id'], fid)
+                smcd = [i['faceId'] for i in sm['candidates']]
+                if not fid in smcd:
+                    sm['candidates'].append({'faceId': face, 'confidence': simi['confidence']})
+                MongoHelper.save_person(sm)
                 
             MongoHelper.save_person(face_info)
-            Logger.debug('face info saved ' + str(face_info))
 
         if not face_id in tags:
             tags.append(face_id)
