@@ -8,16 +8,39 @@ import time
 import uuid
 import Utils
 import Logger
+import ComputerVision
 
 @asyncio.coroutine
 def process_images(image):
     yield from process_location(image)
     yield from process_voice(image)
     yield from process_face_groups(image)
+    yield from process_computor_vision(image)
     image['processed'] = True
     Logger.debug('final image: ' + str(image))
     MongoHelper.save_image(image)
 
+@asyncio.coroutine
+def process_computor_vision(image):
+    path = Utils.get_user_path(image['user_id']) + "/" + image['image_name']
+#     path = "/data/photos/" + image['image_name']
+    cv_dict = yield from ComputerVision.get_computer_vision(path)
+    Logger.debug(cv_dict)
+    rkeys = cv_dict.keys()
+    key_set = set()
+    for key in rkeys:
+        key_set |= set(key.split(' '))
+        
+    Logger.debug('key set: ' + str(key_set))
+    tags = image.get('tags', [])
+    for key in key_set:
+        if key in Config.config['supported_cv_tags']:
+            tags.append(key)
+    
+    Logger.debug('tags: ' + str(tags))
+    image['tags'] = tags
+    
+    
 @asyncio.coroutine
 def process_location(image):
     location = image.get('location','0,0')

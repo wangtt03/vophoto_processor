@@ -1,0 +1,13 @@
+docker pull mongo
+sudo docker run --name my-mongodb -v /data/mongodata/:/data/db -d mongo
+
+docker pull memcached
+sudo docker run --name my-memcached -d memcached
+
+docker pull jmozah/caffe-web-demo
+sudo docker run -p 5000:5000 -it -v /path/to/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel:/opt/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel -v /path/to/data:/opt/caffe/data -v /path/to/caffe/examples/web_demo/app.py:/opt/caffe/examples/web_demo/app.py -v /path/to/photos:/data/photos jmozah/caffe-web-demo /bin/bash
+
+
+docker pull wangtt/vophoto
+sudo docker run --link my-memcached:my-memcached --link my-mongodb:my-mongodb -v /home/wangtiantian/vophoto/:/data/vophoto -v /path/to/photos:/data/photos wangtt/vophoto python3 /data/vophoto/src/WebServer.py
+sudo docker run --link my-memcached:my-memcached --link my-mongodb:my-mongodb -v /home/wangtiantian/vophoto_processor/:/data/vophoto_processor -v /path/to/photos:/data/photos wangtt/vophoto python3 /data/vophoto_processor/src/ImageProcessor.py
