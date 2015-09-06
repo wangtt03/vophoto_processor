@@ -11,3 +11,5 @@ sudo docker run -p 5000:5000 -it -v /path/to/models/bvlc_reference_caffenet/bvlc
 docker pull wangtt/vophoto
 sudo docker run --link my-memcached:my-memcached --link my-mongodb:my-mongodb -v /home/wangtiantian/vophoto/:/data/vophoto -v /path/to/photos:/data/photos wangtt/vophoto python3 /data/vophoto/src/WebServer.py
 sudo docker run --link my-memcached:my-memcached --link my-mongodb:my-mongodb -v /home/wangtiantian/vophoto_processor/:/data/vophoto_processor -v /path/to/photos:/data/photos wangtt/vophoto python3 /data/vophoto_processor/src/ImageProcessor.py
+
+docker run -it --link some-mongo:mongo --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT/test"'

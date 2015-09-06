@@ -10,5 +10,5 @@ config = {
     'human_name_pos':['nh'],
     'memcached_host': '127.0.0.1',
     'face_api_key':'4e2bee77f4e74a5a89f725c44637b485',
-    'supported_cv_tags': ['cat', 'dog', 'bird', 'fish'] 
+    'supported_cv_tags': ['cat', 'dog', 'bird', 'fish','computer'] 
 }
