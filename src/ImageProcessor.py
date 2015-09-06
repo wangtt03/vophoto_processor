@@ -46,8 +46,11 @@ def process_location(image):
     location = image.get('location','0,0')
     name = image['image_name']
     user_id = image['user_id']
-    loc = [float(i) for i in location.split(',')]
-    Utils.update_user_photo_indexer(user_id, loc, name)
+    loc = []
+    loc.append(location['longitude'])
+    loc.append(location['latitude'])
+    # loc = [float(i) for i in location.split(',')]
+    # Utils.update_user_photo_indexer(user_id, loc, name)
     
 
 @asyncio.coroutine
