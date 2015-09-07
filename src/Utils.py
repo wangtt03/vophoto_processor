@@ -5,8 +5,9 @@ from hashlib import md5
 import os
 from pymemcache.client.base import Client
 import pickle
+import bmemcached
 
-mc = Client((Config.config['memcached_host'], 11211))
+mc = bmemcached.Client((Config.config['memcached_host'],))
 
 def get_user_photo_location_indexer(user_id):
     indexer = mc.get(user_id + '_location')
