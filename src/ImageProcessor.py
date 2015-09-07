@@ -12,8 +12,6 @@ import ComputerVision
 
 @asyncio.coroutine
 def process_images(image):
-    yield from process_location(image)
-    yield from process_voice(image)
     yield from process_face_groups(image)
     yield from process_computor_vision(image)
     image['processed'] = True
@@ -39,30 +37,6 @@ def process_computor_vision(image):
     
     Logger.debug('tags: ' + str(tags))
     image['tags'] = tags
-    
-    
-@asyncio.coroutine
-def process_location(image):
-    location = image.get('location','0,0')
-    name = image['image_name']
-    user_id = image['user_id']
-    loc = []
-    loc.append(location['longitude'])
-    loc.append(location['latitude'])
-    # loc = [float(i) for i in location.split(',')]
-    # Utils.update_user_photo_indexer(user_id, loc, name)
-    
-
-@asyncio.coroutine
-def process_voice(image):
-    desc = image.get('desc', '')
-    keys = Utils.get_meaningful_keywords(desc)
-    tags = image.get('tags', [])
-    for key in keys:
-        if not key in tags:
-            tags.append(key)
-    image['tags'] = tags
-    Logger.debug('tags: ' + str(tags))
 
 @asyncio.coroutine
 def process_face_groups(image):

@@ -328,8 +328,9 @@ def test():
 #         res = yield from get_face_group(user_id)
 #         print(res)
 
-        yield from delete_face_group(user_id)
-        yield from create_face_group(user_id)
+        res = yield from delete_face_group(user_id)
+        res = yield from create_face_group(user_id)
+        print(res)
 # #         
 #         faces = yield from detect_faces_in_photo('e:/data/1.jpg')
 #         print(faces)

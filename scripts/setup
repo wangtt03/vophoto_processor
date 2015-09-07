@@ -5,11 +5,12 @@ docker pull memcached
 sudo docker run --name my-memcached -d memcached
 
 docker pull jmozah/caffe-web-demo
-sudo docker run -p 5000:5000 -it -v /path/to/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel:/opt/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel -v /path/to/data:/opt/caffe/data -v /path/to/caffe/examples/web_demo/app.py:/opt/caffe/examples/web_demo/app.py -v /path/to/photos:/data/photos jmozah/caffe-web-demo /bin/bash
+sudo docker run -p 5000:5000 -it -v /home/wangtiantian/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel:/opt/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel -v /home/wangtiantian/data:/opt/caffe/data -v  /home/wangtiantian/vophoto_processor/src/app.py:/opt/caffe/examples/web_demo/app.py -v /data/photos:/data/photos jmozah/caffe-web-demo /bin/bash
 
 
 docker pull wangtt/vophoto
-sudo docker run --link my-memcached:my-memcached --link my-mongodb:my-mongodb -v /home/wangtiantian/vophoto/:/data/vophoto -v /path/to/photos:/data/photos wangtt/vophoto python3 /data/vophoto/src/WebServer.py
-sudo docker run --link my-memcached:my-memcached --link my-mongodb:my-mongodb -v /home/wangtiantian/vophoto_processor/:/data/vophoto_processor -v /path/to/photos:/data/photos wangtt/vophoto python3 /data/vophoto_processor/src/ImageProcessor.py
+sudo docker run -p 8888:8888 --link memcached1:memcached1 --link mongodb1:mongodb1 -v /home/wangtiantian/vophoto/:/data/vophoto -v /data/photos:/data/photos -d wangtt/vophoto python3 /data/vophoto/src/WebServer.py
+sudo docker run --link memcached1:memcached1 --link mongodb1:mongodb1 -v /home/wangtiantian/vophoto_processor/:/data/vophoto_processor -v /data/photos:/data/photos -d wangtt/vophoto python3 /data/vophoto_processor/src/ImageProcessor.py
 
-docker run -it --link some-mongo:mongo --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT/test"'
+docker run -it --link mongodb1:mongodb1 --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT/VoiceImageDB"'
+

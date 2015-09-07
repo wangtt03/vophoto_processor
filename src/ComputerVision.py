@@ -10,7 +10,7 @@ import asyncio
 import urllib
 import Logger
 
-host = 'http://vophoto-test.chinacloudapp.cn:5000'
+host = 'http://localhost:5000'
 @asyncio.coroutine
 def get_computer_vision(path):
     cv_json = {}
